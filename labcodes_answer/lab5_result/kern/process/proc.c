@@ -273,6 +273,7 @@ setup_kstack(struct proc_struct *proc) {
     struct Page *page = alloc_pages(KSTACKPAGE);
     if (page != NULL) {
         proc->kstack = (uintptr_t)page2kva(page);
+        cprintf("%d\n",proc->kstack);
         return 0;
     }
     return -E_NO_MEM;
@@ -281,6 +282,7 @@ setup_kstack(struct proc_struct *proc) {
 // put_kstack - free the memory space of process kernel stack
 static void
 put_kstack(struct proc_struct *proc) {
+	cprintf("%d\n",proc->kstack);
     free_pages(kva2page((void *)(proc->kstack)), KSTACKPAGE);
 }
 
@@ -820,20 +822,30 @@ init_main(void *arg) {
     size_t nr_free_pages_store = nr_free_pages();
     size_t kernel_allocated_store = kallocated();
 
+
+
     int pid = kernel_thread(user_main, NULL, 0);
     if (pid <= 0) {
         panic("create user_main failed.\n");
     }
 
+    cprintf("kernel_allocated_store %d\n",kernel_allocated_store);
+    cprintf("now start schedule\n");
     while (do_wait(0, NULL) == 0) {
         schedule();
     }
+    cprintf("max pid %d\n",MAX_PID);
+    cprintf("max process %d\n",MAX_PROCESS);
 
     cprintf("all user-mode processes have quit.\n");
     assert(initproc->cptr == NULL && initproc->yptr == NULL && initproc->optr == NULL);
     assert(nr_process == 2);
     assert(list_next(&proc_list) == &(initproc->list_link));
     assert(list_prev(&proc_list) == &(initproc->list_link));
+
+    cprintf("nr_free_pages_store %d\n",nr_free_pages_store);
+    cprintf("nr_free_pages %d\n",nr_free_pages());
+
     assert(nr_free_pages_store == nr_free_pages());
     assert(kernel_allocated_store == kallocated());
     cprintf("init check memory pass.\n");

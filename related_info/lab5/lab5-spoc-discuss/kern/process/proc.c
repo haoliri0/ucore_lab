@@ -454,7 +454,10 @@ do_exit(int error_code) {
         panic("initproc exit.\n");
     }
     
+<<<<<<< HEAD
     cprintf("")
+=======
+>>>>>>> 69afb3405bdb64689b20d5605df73c319289a8e1
     struct mm_struct *mm = current->mm;
     if (mm != NULL) {
         lcr3(boot_cr3);

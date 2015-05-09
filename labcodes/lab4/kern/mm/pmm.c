@@ -443,7 +443,7 @@ page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep) {
         *ptep = 0;										//(5) clear second page table entry
         tlb_invalidate(pgdir, la);                          	  	  	  	 //(6) flush tlb
     }
-    
+
 }
 
 //page_remove - free an Page which is related linear address la and has an validated pte
