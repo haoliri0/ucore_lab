@@ -2,10 +2,34 @@
 <section name="Workbench">
 	<section name="completion_proposal_size">
 	</section>
+	<section name="org.eclipse.cdt.internal.ui.browser.opentype.OpenTypeActionSettings">
+		<item value="true" key="show_structs"/>
+		<item value="true" key="show_lowlevel"/>
+		<item value="true" key="show_macros"/>
+		<item value="true" key="show_variables"/>
+		<item value="627" key="width"/>
+		<item value="true" key="show_functions"/>
+		<item value="true" key="show_enums"/>
+		<item value="608" key="height"/>
+		<item value="true" key="show_classes"/>
+		<item value="true" key="show_typedefs"/>
+		<item value="true" key="show_namespaces"/>
+		<item value="true" key="show_unions"/>
+		<item value="true" key="show_enumerators"/>
+		<item value="-4" key="y"/>
+		<item value="402" key="x"/>
+	</section>
 	<section name="PDOMSearchPage">
 		<item value="227187" key="searchFlags"/>
 		<item value="false" key="caseSensitive"/>
 		<list key="previousPatterns">
+			<item value="le2proc"/>
+			<item value="skew_heap_insert"/>
+			<item value="run_queue"/>
+			<item value="skew_heap_entry_t"/>
+			<item value="lab6_run_pool"/>
+			<item value="list_init"/>
+			<item value="run_timer_list"/>
 			<item value="memcpy"/>
 			<item value="LAB5"/>
 			<item value="SETGATE"/>
