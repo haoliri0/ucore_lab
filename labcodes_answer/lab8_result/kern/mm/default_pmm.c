@@ -80,6 +80,7 @@ default_init_memmap(struct Page *base, size_t n) {
     nr_free += n;
     //first block
     base->property = n;
+
 }
 
 static struct Page *

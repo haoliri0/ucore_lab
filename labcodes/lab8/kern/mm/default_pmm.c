@@ -69,107 +69,88 @@ static void
 default_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
     struct Page *p = base;
-    for (; p != base + n; p ++) {
-        assert(PageReserved(p));
-        p->flags = 0;
-        SetPageProperty(p);
-        p->property = 0;
+    for (; p != base + n; p++) {
+        assert(PageReserved(p));                
+        SetPageProperty(p);                     //set the bit-1 to 1 meaning free.
+        p->property = 0;                        
         set_page_ref(p, 0);
-        list_add_before(&free_list, &(p->page_link));
     }
-    nr_free += n;
     base->property = n;
-
+    nr_free += n;
+    list_add(&free_list, &(base->page_link));
 }
 
 static struct Page *
-default_alloc_pages(size_t n) {
+default_alloc_pages(size_t n) {                 // first-fit algo.
     assert(n > 0);
+    //cprintf("***** ALLOC: nr_free is %d, n is %d *****\n", nr_free, n);
     if (n > nr_free) {
         return NULL;
     }
     struct Page *page = NULL;
     list_entry_t *le = &free_list;
-    list_entry_t *len;
-
-    while((le=list_next(le)) != &free_list)
-    {
-    	struct Page *p = le2page(le, page_link);
-    	if (p->property >= n)
-    	{
-    		int i;
-    		for(i=0;i<n;i++)
-    		{
-    			len = list_next(le);
-    			struct Page *pp = le2page(le, page_link);
-    			SetPageReserved(pp);
-    			ClearPageProperty(pp);
-    			list_del(le);
-    			le = len;
-    		}
-    		if (p->property > n)
-    			(le2page(le,page_link))->property = p->property - n;
-    		ClearPageProperty(p);
-    		SetPageReserved(p);
-    		nr_free -= n;
-    		return p;
-    	}
+    while ((le = list_next(le)) != &free_list) {
+        struct Page *p = le2page(le, page_link);
+        //("***** ALLOC: the block searching now is %08x, free_list is %08x. *****\n", p, free_list);
+        if (p->property >= n) {
+            //cprintf("***** ALLOC: find a page to allocate. *****\n");
+            page = p;
+            for (; p != page + n; p++) {
+                ClearPageProperty(p);               // set used.
+            }
+            assert(p == page + n);
+            if (page->property > n) {            
+                p->property = page->property - n;
+                list_add(&(page->page_link), &(p->page_link));
+            }
+            nr_free -= n;
+            list_del(&(page->page_link));  
+            page->property = 0;
+            break;
+        }
     }
+    //cprintf("***** ALLOC: page is %08x *****\n", page);
     return page;
 }
 
 static void
 default_free_pages(struct Page *base, size_t n) {
-	assert(n > 0);
-	list_entry_t *le = &free_list;
-    struct Page * p;
-    while (p <= base && (le = list_next(le)) != &free_list)
-	    p = le2page(le, page_link);
-
-	for(p=base;p<base+n;p++)
-	{
-      list_add_before(le, &(p->page_link));
-      p->flags = 0;
-      set_page_ref(p, 0);
-	}
-
-    base->flags = 0;
-    set_page_ref(base, 0);
-    ClearPageProperty(base);
-    SetPageProperty(base);
-    base->property = n;
-
-    while (1)
-    {
-        p = le2page(le, page_link);
-        if (base->page_link.next != &free_list && base+base->property==p)
-        {
-            base->property += p->property;
-            p->property = 0;
-        }
-        else break;
+    assert(n > 0);
+    struct Page *p = base, *q;
+    for (; p != base + n; p++) {
+        assert(PageReserved(p) && !PageProperty(p));
+        SetPageProperty(p);                     // set free.
+        set_page_ref(p, 0);
     }
-    le = list_prev(&(base->page_link));
-    p = le2page(le, page_link);
-    if(le != &free_list && p == base-1)
-    {
-    	while (1)
-    	{
-	        if (p->property)
-	        {
-	        	p->property += base->property;
-	        	base->property = 0;
-	        	break;
-	        }
-	        if (le != &free_list)
-	        {
-	        	le = list_prev(le);
-	        	p = le2page(le,page_link);
-	        }
-	        else break;
-	    }
-	}
+    base->property = n;
+    
+    list_entry_t *le = list_next(&free_list);
+    while (1) {
+        if (le == &free_list) {                 // maybe p is combined, so that useless.
+            list_add_before(&free_list, &(base->page_link));
+            break;
+        }
+        p = le2page(le, page_link);
+        //cprintf("***** FREE: base is %08x, p is %08x, base + prop = %08x, p + prop = %08x *****\n", base, p, base+base->property, p+p->property);
+        if (base + base->property == p) {      
+            base->property += p->property; 
+            q = le2page(p->page_link.next, page_link);
+            list_del(&(p->page_link));
+            p = q;
+        }
+        if (p + p->property == base) {
+            p->property += base->property;
+            base = p;
+            list_del(&(p->page_link));
+        }
+        if (base < p) {
+            list_add_before(&(p->page_link), &(base->page_link));
+            break;
+        }
+        le = list_next(le);
+     }
     nr_free += n;
+    return;
 }
 
 static size_t
